@@ -1,14 +1,28 @@
 {
     "filePath": "/new_df.csv",
-    "aggregatorFunction": null,
-    "aggregatorColumn": null,
+    "aggregatorFunction": "MAX",
+    "aggregatorColumn": "goals_scored",
     "columnFilters": [
+        {
+            "column": "team_code",
+            "operator": "greaterThan",
+            "value": "90",
+            "condition": "or"
+        },
+        {
+            "column": "team_code",
+            "operator": "lessThan",
+            "value": "10",
+            "condition": ""
+        }
     ],
     "displayColumns": [
-        "goals_scored", "team_name"
+        "team_name", "team_code", "goals_scored"
     ],
     "distinctCols": [
+        "team_name"
     ],
     "groupedBy": [
+        "team_name", "team_code"
     ]
 }

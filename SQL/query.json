@@ -1,6 +1,6 @@
 {
     "filePath": "/new_df.csv",
-    "aggregatorFunction": "MIN",
+    "aggregatorFunction": "AVG",
     "aggregatorColumn": "goals_scored",
     "columnFilters": [
         {

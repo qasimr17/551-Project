@@ -36,21 +36,21 @@ def reduceSelectAggregator(subsets, aggregator, distinctCols, message):
     if aggregator == "MAX":
         final_val = pd.concat(subsets, ignore_index=True).max()
         intermediate_dict['message'] = "The final output is a max of the intermediate results: "
-        intermediate_dict['value'] = final_val
+        intermediate_dict['value'] = str(final_val)
         message['final_result'] = intermediate_dict
         return message
 
     elif aggregator == "MIN":
         final_val = pd.concat(subsets, ignore_index=True).min()
         intermediate_dict['message'] = "The final output is a min of the intermediate results: "
-        intermediate_dict['value'] = final_val
+        intermediate_dict['value'] = str(final_val)
         message['final_result'] = intermediate_dict
         return message
 
     elif aggregator == "SUM":
         final_val = pd.concat(subsets, ignore_index=True).sum()
         intermediate_dict['message'] = "The final output is also a sum of the intermediate results: "
-        intermediate_dict['value'] = final_val
+        intermediate_dict['value'] = str(final_val)
         message['final_result'] = intermediate_dict
         return message
 
@@ -61,7 +61,7 @@ def reduceSelectAggregator(subsets, aggregator, distinctCols, message):
             length += y 
         final_val = round(total / length, 3)
         intermediate_dict['message'] = "For the final output, we compute the overall_total and overall_count to get: "
-        intermediate_dict['value'] = final_val
+        intermediate_dict['value'] = str(final_val)
         message['final_result'] = intermediate_dict
         return message
 
@@ -69,7 +69,7 @@ def reduceSelectAggregator(subsets, aggregator, distinctCols, message):
         if not distinctCols:
             total_count = sum(subsets)
             intermediate_dict['message'] = "The final output is a sum of all the intermediate counts: "
-            intermediate_dict['value'] = total_count
+            intermediate_dict['value'] = str(total_count)
             message['final_result'] = intermediate_dict
             return message
             # return total_count 
@@ -78,8 +78,8 @@ def reduceSelectAggregator(subsets, aggregator, distinctCols, message):
             subsets = np.array([item for sublist in subsets for item in sublist], dtype=object)
             unique_len = len(np.unique(subsets))
             # print(f"The count of unique values is thus: {unique_len}")
-            intermediate_dict['message'] = "The final output is a sum of all the intermediate counts: "
-            intermediate_dict['value'] = unique_len
+            intermediate_dict['message'] = "To compute the final result, we found all the distinct values in each partition, sent them to the reducer function and then computed the number of total unique values."
+            intermediate_dict['value'] = str(unique_len)
             message['final_result'] = intermediate_dict
             return message
             # return unique_len
@@ -90,8 +90,8 @@ def reduceSum(subsets, displayColumns, groupedBy, aggregatorColumn, message):
     intermediate_dict = {}
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).sum(aggregatorColumn)
-    intermediate_dict['message'] = "The final output is then: "
-    intermediate_dict['value'] = total_df
+    intermediate_dict['message'] = "To compute the final output, we "
+    intermediate_dict['value'] = total_df.to_json(orient='table')
     message['final_result'] = intermediate_dict
     return message
     # return total_df
@@ -103,7 +103,8 @@ def reduceMax(subsets, displayColumns, groupedBy, aggregatorColumn, message):
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).max(aggregatorColumn)
     intermediate_dict['message'] = "The final output is then: "
-    intermediate_dict['value'] = total_df
+    intermediate_dict['value'] = total_df.to_json(orient='table')
+    print(f"Type is: {type(intermediate_dict)}")
     message['final_result'] = intermediate_dict
     return message
     # return total_df
@@ -114,7 +115,7 @@ def reduceMin(subsets, displayColumns, groupedBy, aggregatorColumn, message):
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).min(aggregatorColumn)
     intermediate_dict['message'] = "The final output is then: "
-    intermediate_dict['value'] = total_df
+    intermediate_dict['value'] = total_df.to_json(orient='table')
     message['final_result'] = intermediate_dict
     return message
     # return total_df
@@ -125,7 +126,7 @@ def reduceAvg(subsets, displayColumns, groupedBy, aggregatorColumn, message):
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).mean(aggregatorColumn)
     intermediate_dict['message'] = "The final output is then: "
-    intermediate_dict['value'] = total_df
+    intermediate_dict['value'] = total_df.to_json(orient='table')
     message['final_result'] = intermediate_dict
     return message
     # return total_df
@@ -136,7 +137,7 @@ def reduceCount(subsets, displayColumns, groupedBy, aggregatorColumn, message):
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).sum(aggregatorColumn)
     intermediate_dict['message'] = "The final output is then: "
-    intermediate_dict['value'] = total_df
+    intermediate_dict['value'] = total_df.to_json(orient='table')
     message['final_result'] = intermediate_dict
     return message
     # return total_df
@@ -193,7 +194,10 @@ def agg_function(query):
 
     total_json['intermediate_result'] = intermediate_message_list
     reduced = call_relevant_reducer(query=query, reducer_list=reducer, message=total_json)
+    reduced = json.dumps(reduced)
+
     return reduced
+    # return reduced
 
 
 def select(query):
@@ -302,6 +306,8 @@ def select_with_aggregator(query):
 
     total_json['intermediate_message'] = intermediate_message_list
     reduced_select = reduceSelectAggregator(reducer, aggregator=aggregatorFunction, distinctCols=distinctCols, message=total_json)
+    
+    reduced_select = json.dumps(reduced_select)
     return reduced_select
 
 

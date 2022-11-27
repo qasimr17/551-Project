@@ -121,8 +121,9 @@ def buildMessageSelectAggregator(value, aggregatorFunction, partition, distinctC
             intermediate_message['value'] = f'{value}'
             return intermediate_message
         else:
-            intermediate_message['message'] = f"The values in partition {partition}, whose distinct values will be counted in the end are: "
-            intermediate_message['value'] = f'"{value}"'
+            # intermediate_message['message'] = f"The values in partition {partition}, whose distinct values will be counted in the end are: "
+            intermediate_message['message'] = f"The number of distinct values in partition {partition} are: "
+            intermediate_message['value'] = f'{len(value)}'
             return intermediate_message     
 
     if aggregatorFunction == "SUM":
@@ -141,8 +142,8 @@ def buildMessageSelect(value, partition, distinctCols = None):
 
 def buildMessageAggregator(value, partition):
 
+    value = value.to_json(orient='table')
     intermediate_message = {}
-    # if aggregatorFunction == "MAX":
     intermediate_message['message'] = f"Result for partition {partition} is: "
     intermediate_message['value'] = f'{value}'
     return intermediate_message

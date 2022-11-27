@@ -5,10 +5,9 @@
     "columnFilters": [
     ],
     "displayColumns": [
-        "team_code"
+        "goals_scored", "team_name"
     ],
     "distinctCols": [
-        "team_code"
     ],
     "groupedBy": [
     ]

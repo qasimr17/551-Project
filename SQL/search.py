@@ -231,9 +231,9 @@ def select(query):
     total_json['intermediate_message'] = intermediate_message_list
     reduced_select = reduceSelect(reducer, distinctCols=distinctCols, message=total_json)
 
-    # return reduced_select.to_json(orient='table')
+    reduced_select = json.dumps(reduced_select)
     return reduced_select
-    # return reduced_select.to_json(orient='table')
+
 
 def select_with_aggregator(query):
 

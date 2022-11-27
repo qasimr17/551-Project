@@ -1,0 +1,16 @@
+{
+    "filePath": "/new_df.csv",
+    "aggregatorFunction": "SUM",
+    "aggregatorColumn": "goals_scored",
+    "columnFilters": [
+    ],
+    "displayColumns": [
+       "team_name", "goals_scored"
+    ],
+    "distinctCols": [
+    ],
+    "groupedBy": [
+        "team_name"
+    ],
+    "having": {"greaterThan": 50}
+}

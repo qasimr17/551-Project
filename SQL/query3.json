@@ -1,0 +1,17 @@
+{
+    "filePath": "/new_df.csv",
+    "aggregatorFunction": null,
+    "aggregatorColumn": null,
+    "columnFilters": [
+        {
+            "goals_scored": {"equals": 23}
+        }
+    ],
+    "displayColumns": [
+        "first_name", "second_name", "team_name"
+    ],
+    "distinctCols": [
+    ],
+    "groupedBy": [
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "filePath": "/new_df.csv",
+    "aggregatorFunction": "MAX",
+    "aggregatorColumn": "goals_scored",
+    "columnFilters": [
+    ],
+    "displayColumns": [
+        "goals_scored"
+    ],
+    "distinctCols": [
+    ],
+    "groupedBy": [
+    ]
+}

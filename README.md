@@ -1,1 +1,1 @@
-# 551-Project
+# DSCI-551

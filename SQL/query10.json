@@ -1,0 +1,14 @@
+{
+    "filePath": "/new_df.csv",
+    "aggregatorFunction": "COUNT",
+    "aggregatorColumn": "first_name",
+    "columnFilters": [
+    ],
+    "displayColumns": [
+      "first_name"
+    ],
+    "distinctCols": [
+    ],
+    "groupedBy": [
+    ]
+}

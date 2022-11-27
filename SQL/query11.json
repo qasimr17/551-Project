@@ -1,0 +1,15 @@
+{
+    "filePath": "/new_df.csv",
+    "aggregatorFunction": "AVG",
+    "aggregatorColumn": "creativity",
+    "columnFilters": [
+    ],
+    "displayColumns": [
+       "team_name", "creativity"
+    ],
+    "distinctCols": [
+    ],
+    "groupedBy": [
+        "team_name"
+    ]
+}

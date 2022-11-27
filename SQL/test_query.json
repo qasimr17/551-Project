@@ -1,14 +1,14 @@
 {
     "filePath": "/new_df.csv",
-    "aggregatorFunction": "AVG",
-    "aggregatorColumn": "goals_scored",
+    "aggregatorFunction": "COUNT",
+    "aggregatorColumn": "team_name",
     "columnFilters": [
-
     ],
     "displayColumns": [
-        "goals_scored"
+        "team_name"
     ],
     "distinctCols": [
+        "team_name"
     ],
     "groupedBy": [
     ]

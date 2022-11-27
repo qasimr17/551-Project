@@ -95,3 +95,32 @@ def agg_function_helper(query, df, filter_query):
 
         subset = df.query(filter_query)[displayColumns].groupby(groupedBy)[aggregatorColumn].count().reset_index()
         return subset
+
+
+def buildMessageSelectAggregator(value, aggregatorFunction, partition, distinctCols = None):
+
+    intermediate_message = {}
+    if aggregatorFunction == "MAX":
+        intermediate_message['message'] = f"The max value for partition {partition} is: "
+        intermediate_message['value'] = f'{value}'
+        return intermediate_message
+
+    if aggregatorFunction == "MIN":
+        intermediate_message['message'] = f"The min value for partition {partition} is: "
+        intermediate_message['value'] = f'{value}'
+        return intermediate_message
+
+    if aggregatorFunction == "AVG":
+        intermediate_message['message'] = f"The avg value and items used for partition {partition} is: "
+        intermediate_message['value'] = f'Average: {value[0]}, Items: {value[1]}'
+        return intermediate_message
+
+    if aggregatorFunction == "COUNT":
+        if not distinctCols:
+            intermediate_message['message'] = f"The counts in partition {partition} are: "
+            intermediate_message['value'] = f'{value}'
+            return intermediate_message
+        else:
+            intermediate_message['message'] = f"The values in partition {partition} are: "
+            intermediate_message['value'] = f'{value}'
+            return intermediate_message     

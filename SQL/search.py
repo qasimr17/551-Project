@@ -20,32 +20,52 @@ def reduceSelect(subsets, distinctCols):
     else:
         return pd.concat(subsets, ignore_index=True)
 
-def reduceSelectAggregator(subsets, aggregator, distinctCols):
+def reduceSelectAggregator(subsets, aggregator, distinctCols, message):
 
+    intermediate_dict = {}
     if aggregator == "MAX":
-        return pd.concat(subsets, ignore_index=True).max()
+        final_val = pd.concat(subsets, ignore_index=True).max()
+        intermediate_dict['message'] = "The final output is a max of the intermediate results: "
+        intermediate_dict['value'] = final_val
+        message['final_result'] = intermediate_dict
+        return message
+
     elif aggregator == "MIN":
-        return pd.concat(subsets, ignore_index=True).min()
+        final_val = pd.concat(subsets, ignore_index=True).min()
+        intermediate_dict['message'] = "The final output is a min of the intermediate results: "
+        intermediate_dict['value'] = final_val
+        message['final_result'] = intermediate_dict
+        return message
+
     elif aggregator == "AVG":
-        # new attempt:
         total, length = 0, 0 
         for x, y in subsets:
             total += x * y 
             length += y 
-        print(f"The final answer is: {total/length}")
-        return total / length
-        # return pd.concat(subsets, ignore_index=True).mean()
+        final_val = round(total / length, 3)
+        intermediate_dict['message'] = "For the final output, we compute the overall_total and overall_count to get: "
+        intermediate_dict['value'] = final_val
+        message['final_result'] = intermediate_dict
+        return message
+
     elif aggregator == "COUNT":
         if not distinctCols:
             total_count = sum(subsets)
-            print(f"The total count, after summing all the counts from each partition is: {total_count}.")
-            return total_count 
+            intermediate_dict['message'] = "The final output is a sum of all the intermediate counts: "
+            intermediate_dict['value'] = total_count
+            message['final_result'] = intermediate_dict
+            return message
+            # return total_count 
 
         if distinctCols:
             subsets = np.array([item for sublist in subsets for item in sublist], dtype=object)
             unique_len = len(np.unique(subsets))
-            print(f"The count of unique values is thus: {unique_len}")
-            return unique_len
+            # print(f"The count of unique values is thus: {unique_len}")
+            intermediate_dict['message'] = "The final output is a sum of all the intermediate counts: "
+            intermediate_dict['value'] = unique_len
+            message['final_result'] = intermediate_dict
+            return message
+            # return unique_len
 
 
 def reduceSum(subsets, displayColumns, groupedBy, aggregatorColumn):
@@ -176,6 +196,9 @@ def select_with_aggregator(query):
     partitions = commands.commands_main('getPartitionLocations', path = filePath)['partitions']
 
     reducer = []
+    total_json = {}
+    intermediate_message_list = []
+
     filterQuery = utils.buildFilterQuery(columnFilters=columnFilters)
 
     for partition in partitions:
@@ -184,35 +207,43 @@ def select_with_aggregator(query):
 
         if aggregatorFunction == "MAX":
             subset = df.query(filterQuery)[displayColumns].max()
+            value = subset.values[0]
+            intermediate_message = utils.buildMessageSelectAggregator(value, aggregatorFunction, partition)
+
         elif aggregatorFunction == "MIN":
             subset = df.query(filterQuery)[displayColumns].min()
+            value = subset.values[0]
+            intermediate_message = utils.buildMessageSelectAggregator(value, aggregatorFunction, partition)
+
         elif aggregatorFunction == "AVG":
             
             intermediate_avg = df.query(filterQuery)[displayColumns].mean()
-            intermediate_avg = intermediate_avg.values[0]
+            intermediate_avg = round(intermediate_avg.values[0], 3)
             items = len(df)
             subset = intermediate_avg, items 
-            # Need to send this as json for each partition for front-end
-            print(f"The average value of {displayColumns[0]} for partition {partition} is: {intermediate_avg} using {items} items.")
-        
+            intermediate_message = utils.buildMessageSelectAggregator(subset, aggregatorFunction, partition)
+
         elif aggregatorFunction == "COUNT":
             if not distinctCols:
                 intermediate_count = df.query(filterQuery)[displayColumns].count()
                 intermediate_count = intermediate_count.values[0]
-                print(f"The count of {displayColumns[0]} in partition {partition} is {intermediate_count}.")
                 subset = intermediate_count
+                intermediate_message = utils.buildMessageSelectAggregator(subset, aggregatorFunction, partition)
             else:
                 intermediate_values = df.query(filterQuery)[displayColumns]
                 col = displayColumns[0]
                 intermediate_values = eval(f"intermediate_values.{col}.unique()")
-                # print(f"The unique values for {displayColumns} in partition {partition} are {intermediate_values}.")
                 subset = intermediate_values
-            
+                intermediate_message = utils.buildMessageSelectAggregator(subset, aggregatorFunction, partition, distinctCols = distinctCols)
+
+        intermediate_message_list.append(intermediate_message)
         reducer.append(subset)
 
-    reduced_select = reduceSelectAggregator(reducer, aggregator=aggregatorFunction, distinctCols=distinctCols)
-    # print(reduced_select)
+    total_json['intermediate_message'] = intermediate_message_list
+    reduced_select = reduceSelectAggregator(reducer, aggregator=aggregatorFunction, distinctCols=distinctCols, message=total_json)
     return reduced_select
+
+    
 def main(query):
 
     """ Receives a query from the user in JSON format relating to a search and analytics query that

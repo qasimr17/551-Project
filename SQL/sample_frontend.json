@@ -1,0 +1,4 @@
+{
+    "intermediate": [{"message": "xyz", "value": "bye"}],
+    "final": {"message": "hi", "value": "bye"}
+}

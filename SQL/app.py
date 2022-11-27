@@ -5,7 +5,7 @@ from flask import jsonify
 from flask_cors import CORS, cross_origin
 import pandas as pd 
 import csv 
-
+import search
 
 # app = Blueprint('app', __name__, static_folder='static', static_url_path='/static/admin')
 app = Flask(__name__)
@@ -21,7 +21,7 @@ def readPartition():
     path = args['path']
     partition = args['partition']
     json = commands_main("readPartition",path,partition)
-    del json['tableName']
+    # del json['tableName']
     return json
 
 
@@ -58,6 +58,11 @@ def put():
     hashCol = args['field']
     # file = request.files["file"]
     file = request.files['file']
+
+    if not partitionNum:
+        partitionNum = 5 
+    if not hashCol:
+        hashCol = 'sort_index' 
     
     # cols = data[0].split(',')
     # print(cols)
@@ -65,10 +70,14 @@ def put():
     # print(data[1])
     # df = pd.DataFrame(data=data[1:], columns=list(cols))
     # print(df)
+    print(f"Path is {path}")
+    path = path.split('/')
+    filename = path[-1]
 
-
-    filename = 'try.csv'
-    file.save('try.csv')
+    path = path[:-1]
+    path = '/'.join(path)
+    print(f"Path is {path}")
+    file.save(filename)
     json = commands_main("put",path,partitionNum,filename,hashCol)
     return json
 
@@ -125,8 +134,14 @@ def ls():
 #     json = commands_main(query)
 #     return json
 
-
-
+# Search Functionality SQL
+@app.route('/sql/search', methods = ["POST"])
+def search_sql():
+    args = request.json
+    # print(args)
+    print(f"Type is: {type(args)}")
+    search_result = search.main(args)
+    return search_result
 #mongodb
 
 @app.route('/mongodb/readPartition',methods = ['GET'])

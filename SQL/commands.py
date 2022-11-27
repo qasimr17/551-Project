@@ -287,7 +287,7 @@ def getPartitionLocations(FULL_PATH, cursor):
 
     cursor.execute(f"SELECT partitions FROM meta_data WHERE id = {id};")
     partitions = cursor.fetchone()[0]
-    print(partitions)
+    # print(partitions)
     if partitions:
         partitions = partitions.split(',')
 

@@ -5,7 +5,8 @@ from datetime import datetime
 from sqlalchemy import create_engine
 import commands 
 import json
-import old_utils 
+# import old_utils 
+import utils
 import sys
 import numpy as np
 # Parse the user-returned parameters here. 
@@ -110,14 +111,16 @@ def agg_function(query):
     filePath = query['filePath']
     columnFilters = query['columnFilters']
 
-    tableName, partitions = commands.main('getPartitionLocations', path = filePath, search=True)
+    # tableName, partitions = commands.commands_main('getPartitionLocations', path = filePath)
+    partitions = commands.commands_main('getPartitionLocations', path = filePath)['partitions']
 
     reducer = []
-    filterQuery = old_utils.buildFilterQuery(columnFilters=columnFilters)
+    filterQuery = utils.buildFilterQuery(columnFilters=columnFilters)
 
     for partition in partitions:
-        df = commands.main('readPartition', filePath, partition, search=True)
-        subset = old_utils.agg_function_helper(query=query, df=df, filter_query=filterQuery)
+        df = commands.commands_main('readPartition', filePath, partition)
+        df = pd.read_json(df, orient='table')
+        subset = utils.agg_function_helper(query=query, df=df, filter_query=filterQuery)
         reducer.append(subset)
 
     reduced = call_relevant_reducer(query=query, reducer_list=reducer)
@@ -136,13 +139,15 @@ def select(query):
     displayColumns = query['displayColumns']
     distinctCols = query['distinctCols']
 
-    tableName, partitions = commands.main('getPartitionLocations', path = filePath, search=True)
+    # tableName, partitions = commands.commands_main('getPartitionLocations', path = filePath)
+    partitions = commands.commands_main('getPartitionLocations', path = filePath)['partitions']
 
     reducer = []
-    filterQuery = old_utils.buildFilterQuery(columnFilters=columnFilters)
+    filterQuery = utils.buildFilterQuery(columnFilters=columnFilters)
 
     for partition in partitions:
-        df = commands.main('readPartition', filePath, partition, search=True)
+        df = commands.commands_main('readPartition', filePath, partition)
+        df = pd.read_json(df, orient='table')
         if distinctCols:
             subset = df.query(filterQuery)[displayColumns].drop_duplicates(subset=distinctCols)
         else:
@@ -167,13 +172,15 @@ def select_with_aggregator(query):
     displayColumns = query['displayColumns']
     distinctCols = query['distinctCols']
 
-    tableName, partitions = commands.main('getPartitionLocations', path = filePath, search=True)
+    # tableName, partitions = commands.commands_main('getPartitionLocations', path = filePath)
+    partitions = commands.commands_main('getPartitionLocations', path = filePath)['partitions']
 
     reducer = []
-    filterQuery = old_utils.buildFilterQuery(columnFilters=columnFilters)
+    filterQuery = utils.buildFilterQuery(columnFilters=columnFilters)
 
     for partition in partitions:
-        df = commands.main('readPartition', filePath, partition, search=True)
+        df = commands.commands_main('readPartition', filePath, partition)
+        df = pd.read_json(df, orient='table')
 
         if aggregatorFunction == "MAX":
             subset = df.query(filterQuery)[displayColumns].max()
@@ -226,7 +233,7 @@ def main(query):
 
 
 
-file = sys.argv[1]
+file = './query_new.json'
 with open(file, 'r') as f:
     query = json.load(f)
 

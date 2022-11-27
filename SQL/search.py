@@ -192,7 +192,7 @@ def agg_function(query):
         intermediate_message_list.append(intermediate_message)
         reducer.append(subset)
 
-    total_json['intermediate_result'] = intermediate_message_list
+    total_json['intermediate_message'] = intermediate_message_list
     reduced = call_relevant_reducer(query=query, reducer_list=reducer, message=total_json)
     reduced = json.dumps(reduced)
 

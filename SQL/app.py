@@ -58,6 +58,11 @@ def put():
     hashCol = args['field']
     # file = request.files["file"]
     file = request.files['file']
+
+    if not partitionNum:
+        partitionNum = 5 
+    if not hashCol:
+        hashCol = 'sort_index' 
     
     # cols = data[0].split(',')
     # print(cols)
@@ -65,10 +70,14 @@ def put():
     # print(data[1])
     # df = pd.DataFrame(data=data[1:], columns=list(cols))
     # print(df)
+    print(f"Path is {path}")
+    path = path.split('/')
+    filename = path[-1]
 
-
-    filename = 'try.csv'
-    file.save('try.csv')
+    path = path[:-1]
+    path = '/'.join(path)
+    print(f"Path is {path}")
+    file.save(filename)
     json = commands_main("put",path,partitionNum,filename,hashCol)
     return json
 

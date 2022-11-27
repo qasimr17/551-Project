@@ -12,13 +12,23 @@ import numpy as np
 # Parse the user-returned parameters here. 
 
 
-def reduceSelect(subsets, distinctCols):
+def reduceSelect(subsets, distinctCols, message):
     """ This reducer function simply takes in inputs from all partitions and concatenates them.
     Mimicking the reduce function for an SQL query."""
+    intermediate_dict = {}
     if distinctCols:
-        return pd.concat(subsets, ignore_index=True).drop_duplicates(subset=distinctCols)
+        # return pd.concat(subsets, ignore_index=True).drop_duplicates(subset=distinctCols)
+        final_val = pd.concat(subsets, ignore_index=True).drop_duplicates(subset=distinctCols)
+        intermediate_dict['message'] = "The final, complete df is: "
+        intermediate_dict['value'] = final_val.to_json(orient='table')
+        message['final_result'] = intermediate_dict
+        return message
     else:
-        return pd.concat(subsets, ignore_index=True)
+        final_val = pd.concat(subsets, ignore_index=True)
+        intermediate_dict['message'] = "The final, complete df is: "
+        intermediate_dict['value'] = final_val.to_json(orient='table')
+        message['final_result'] = intermediate_dict
+        return message
 
 def reduceSelectAggregator(subsets, aggregator, distinctCols, message):
 
@@ -33,6 +43,13 @@ def reduceSelectAggregator(subsets, aggregator, distinctCols, message):
     elif aggregator == "MIN":
         final_val = pd.concat(subsets, ignore_index=True).min()
         intermediate_dict['message'] = "The final output is a min of the intermediate results: "
+        intermediate_dict['value'] = final_val
+        message['final_result'] = intermediate_dict
+        return message
+
+    elif aggregator == "SUM":
+        final_val = pd.concat(subsets, ignore_index=True).sum()
+        intermediate_dict['message'] = "The final output is also a sum of the intermediate results: "
         intermediate_dict['value'] = final_val
         message['final_result'] = intermediate_dict
         return message
@@ -68,38 +85,63 @@ def reduceSelectAggregator(subsets, aggregator, distinctCols, message):
             # return unique_len
 
 
-def reduceSum(subsets, displayColumns, groupedBy, aggregatorColumn):
+def reduceSum(subsets, displayColumns, groupedBy, aggregatorColumn, message):
 
+    intermediate_dict = {}
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).sum(aggregatorColumn)
-    return total_df
+    intermediate_dict['message'] = "The final output is then: "
+    intermediate_dict['value'] = total_df
+    message['final_result'] = intermediate_dict
+    return message
+    # return total_df
 
 
-def reduceMax(subsets, displayColumns, groupedBy, aggregatorColumn):
+def reduceMax(subsets, displayColumns, groupedBy, aggregatorColumn, message):
 
+    intermediate_dict = {}
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).max(aggregatorColumn)
-    return total_df
+    intermediate_dict['message'] = "The final output is then: "
+    intermediate_dict['value'] = total_df
+    message['final_result'] = intermediate_dict
+    return message
+    # return total_df
 
-def reduceMin(subsets, displayColumns, groupedBy, aggregatorColumn):
+def reduceMin(subsets, displayColumns, groupedBy, aggregatorColumn, message):
 
+    intermediate_dict = {}
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).min(aggregatorColumn)
-    return total_df
+    intermediate_dict['message'] = "The final output is then: "
+    intermediate_dict['value'] = total_df
+    message['final_result'] = intermediate_dict
+    return message
+    # return total_df
 
-def reduceAvg(subsets, displayColumns, groupedBy, aggregatorColumn):
+def reduceAvg(subsets, displayColumns, groupedBy, aggregatorColumn, message):
 
+    intermediate_dict = {}
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).mean(aggregatorColumn)
-    return total_df
+    intermediate_dict['message'] = "The final output is then: "
+    intermediate_dict['value'] = total_df
+    message['final_result'] = intermediate_dict
+    return message
+    # return total_df
 
-def reduceCount(subsets, displayColumns, groupedBy, aggregatorColumn):
+def reduceCount(subsets, displayColumns, groupedBy, aggregatorColumn, message):
 
+    intermediate_dict = {}
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).sum(aggregatorColumn)
-    return total_df
+    intermediate_dict['message'] = "The final output is then: "
+    intermediate_dict['value'] = total_df
+    message['final_result'] = intermediate_dict
+    return message
+    # return total_df
 
-def call_relevant_reducer(query, reducer_list):
+def call_relevant_reducer(query, reducer_list, message):
     """ Takes in the json query and list of reduced paritions and applies
     the relevant reducer functions on it."""
 
@@ -109,19 +151,20 @@ def call_relevant_reducer(query, reducer_list):
     groupedBy = query['groupedBy']
 
     if aggregatorFunction == "SUM":
-        return reduceSum(reducer_list, displayColumns, groupedBy, aggregatorColumn)
+        return reduceSum(reducer_list, displayColumns, groupedBy, aggregatorColumn, message)
 
     elif aggregatorFunction == "MAX":
-        return reduceMax(reducer_list, displayColumns, groupedBy, aggregatorColumn)
+        return reduceMax(reducer_list, displayColumns, groupedBy, aggregatorColumn, message)
 
     elif aggregatorFunction == "MIN":
-        return reduceMin(reducer_list, displayColumns, groupedBy, aggregatorColumn)
+        return reduceMin(reducer_list, displayColumns, groupedBy, aggregatorColumn, message)
 
     elif aggregatorFunction == "AVG":
-        return reduceAvg(reducer_list, displayColumns, groupedBy, aggregatorColumn) 
+        return reduceAvg(reducer_list, displayColumns, groupedBy, aggregatorColumn, message) 
 
     elif aggregatorFunction == "COUNT":
-        return reduceCount(reducer_list, displayColumns, groupedBy, aggregatorColumn) 
+        return reduceCount(reducer_list, displayColumns, groupedBy, aggregatorColumn, message) 
+
 
 def agg_function(query):
 
@@ -135,16 +178,22 @@ def agg_function(query):
     partitions = commands.commands_main('getPartitionLocations', path = filePath)['partitions']
 
     reducer = []
+    intermediate_message_list = []
+    total_json = {}
     filterQuery = utils.buildFilterQuery(columnFilters=columnFilters)
 
     for partition in partitions:
         df = commands.commands_main('readPartition', filePath, partition)
         df = pd.read_json(df, orient='table')
         subset = utils.agg_function_helper(query=query, df=df, filter_query=filterQuery)
+        # new 
+        intermediate_message = utils.buildMessageAggregator(subset, partition)
+        intermediate_message_list.append(intermediate_message)
         reducer.append(subset)
 
-    reduced = call_relevant_reducer(query=query, reducer_list=reducer)
-    print(reduced)
+    total_json['intermediate_result'] = intermediate_message_list
+    reduced = call_relevant_reducer(query=query, reducer_list=reducer, message=total_json)
+    return reduced
 
 
 def select(query):
@@ -162,6 +211,8 @@ def select(query):
     partitions = commands.commands_main('getPartitionLocations', path = filePath)['partitions']
 
     reducer = []
+    intermediate_message_list = []
+    total_json = {}
     filterQuery = utils.buildFilterQuery(columnFilters=columnFilters)
 
     for partition in partitions:
@@ -169,14 +220,19 @@ def select(query):
         df = pd.read_json(df, orient='table')
         if distinctCols:
             subset = df.query(filterQuery)[displayColumns].drop_duplicates(subset=distinctCols)
+            intermediate_message = utils.buildMessageSelect(subset.head(3), partition, distinctCols)
         else:
             subset = df.query(filterQuery)[displayColumns]
+            intermediate_message = utils.buildMessageSelect(subset.head(3), partition, distinctCols)
 
+        intermediate_message_list.append(intermediate_message)
         reducer.append(subset)
 
-    reduced_select = reduceSelect(reducer, distinctCols=distinctCols)
+    total_json['intermediate_message'] = intermediate_message_list
+    reduced_select = reduceSelect(reducer, distinctCols=distinctCols, message=total_json)
 
-    return reduced_select.to_json(orient='table')
+    # return reduced_select.to_json(orient='table')
+    return reduced_select
     # return reduced_select.to_json(orient='table')
 
 def select_with_aggregator(query):
@@ -236,6 +292,11 @@ def select_with_aggregator(query):
                 subset = intermediate_values
                 intermediate_message = utils.buildMessageSelectAggregator(subset, aggregatorFunction, partition, distinctCols = distinctCols)
 
+        elif aggregatorFunction == "SUM":
+                subset = df.query(filterQuery)[displayColumns].sum()
+                value = subset.values[0]
+                intermediate_message = utils.buildMessageSelectAggregator(value, aggregatorFunction, partition)
+
         intermediate_message_list.append(intermediate_message)
         reducer.append(subset)
 
@@ -243,7 +304,7 @@ def select_with_aggregator(query):
     reduced_select = reduceSelectAggregator(reducer, aggregator=aggregatorFunction, distinctCols=distinctCols, message=total_json)
     return reduced_select
 
-    
+
 def main(query):
 
     """ Receives a query from the user in JSON format relating to a search and analytics query that
@@ -260,7 +321,7 @@ def main(query):
             return select(query=query) 
 
     else:
-        agg_function(query=query)
+        return agg_function(query=query)
 
 
 

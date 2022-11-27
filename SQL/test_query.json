@@ -1,14 +1,14 @@
 {
     "filePath": "/new_df.csv",
-    "aggregatorFunction": "COUNT",
-    "aggregatorColumn": "team_name",
+    "aggregatorFunction": null,
+    "aggregatorColumn": null,
     "columnFilters": [
     ],
     "displayColumns": [
-        "team_name"
+        "team_code"
     ],
     "distinctCols": [
-        "team_name"
+        "team_code"
     ],
     "groupedBy": [
     ]

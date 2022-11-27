@@ -331,10 +331,10 @@ def main(query):
 
 
 
-file = './test_query.json'
-with open(file, 'r') as f:
-    query = json.load(f)
+# file = './test_query.json'
+# with open(file, 'r') as f:
+#     query = json.load(f)
 
-print(main(query))
+# print(main(query))
         
 

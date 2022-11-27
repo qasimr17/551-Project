@@ -1,0 +1,15 @@
+{
+    "filePath": "/new_df.csv",
+    "aggregatorFunction": "AVG",
+    "aggregatorColumn": "goals_scored",
+    "columnFilters": [
+
+    ],
+    "displayColumns": [
+        "goals_scored"
+    ],
+    "distinctCols": [
+    ],
+    "groupedBy": [
+    ]
+}

@@ -5,7 +5,7 @@ from flask import jsonify
 from flask_cors import CORS, cross_origin
 import pandas as pd 
 import csv 
-
+import search
 
 # app = Blueprint('app', __name__, static_folder='static', static_url_path='/static/admin')
 app = Flask(__name__)
@@ -21,7 +21,7 @@ def readPartition():
     path = args['path']
     partition = args['partition']
     json = commands_main("readPartition",path,partition)
-    del json['tableName']
+    # del json['tableName']
     return json
 
 
@@ -125,8 +125,14 @@ def ls():
 #     json = commands_main(query)
 #     return json
 
-
-
+# Search Functionality SQL
+@app.route('/sql/search', methods = ["POST"])
+def search_sql():
+    args = request.json
+    # print(args)
+    print(f"Type is: {type(args)}")
+    search_result = search.main(args)
+    return search_result
 #mongodb
 
 @app.route('/mongodb/readPartition',methods = ['GET'])

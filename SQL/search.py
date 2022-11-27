@@ -133,7 +133,6 @@ def select(query):
     groupBy and where which will have to be made more dynamic."""
 
     # Take example of SELECT first_name, second_name, goals_scored FROM players.csv WHERE first_name = 'Ben' 
-
     filePath = query['filePath']
     columnFilters = query['columnFilters']
     displayColumns = query['displayColumns']
@@ -156,8 +155,9 @@ def select(query):
         reducer.append(subset)
 
     reduced_select = reduceSelect(reducer, distinctCols=distinctCols)
-    print(reduced_select)
 
+    return reduced_select.to_json(orient='table')
+    # return reduced_select.to_json(orient='table')
 
 def select_with_aggregator(query):
 
@@ -211,8 +211,8 @@ def select_with_aggregator(query):
         reducer.append(subset)
 
     reduced_select = reduceSelectAggregator(reducer, aggregator=aggregatorFunction, distinctCols=distinctCols)
-    print(reduced_select)
-
+    # print(reduced_select)
+    return reduced_select
 def main(query):
 
     """ Receives a query from the user in JSON format relating to a search and analytics query that
@@ -224,19 +224,19 @@ def main(query):
     if not groupedBy:
         # User just wants to display the relevant columns 
         if aggregatorFunction:
-            select_with_aggregator(query=query) 
+            return select_with_aggregator(query=query) 
         else:
-            select(query=query) 
+            return select(query=query) 
 
     else:
         agg_function(query=query)
 
 
 
-file = './query_new.json'
+file = './test_query.json'
 with open(file, 'r') as f:
     query = json.load(f)
 
-main(query)
+print(main(query))
         
 

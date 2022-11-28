@@ -90,7 +90,7 @@ def reduceSum(subsets, displayColumns, groupedBy, aggregatorColumn, message):
     intermediate_dict = {}
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).sum(aggregatorColumn)
-    intermediate_dict['message'] = "To compute the final output, we "
+    intermediate_dict['message'] = "The final output is then a concatenation of the groupby of these intermediate results."
     intermediate_dict['value'] = total_df.to_json(orient='table')
     message['final_result'] = intermediate_dict
     return message
@@ -102,7 +102,7 @@ def reduceMax(subsets, displayColumns, groupedBy, aggregatorColumn, message):
     intermediate_dict = {}
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).max(aggregatorColumn)
-    intermediate_dict['message'] = "The final output is then: "
+    intermediate_dict['message'] = "The final output is then a concatenation of the groupby of these intermediate results."
     intermediate_dict['value'] = total_df.to_json(orient='table')
     print(f"Type is: {type(intermediate_dict)}")
     message['final_result'] = intermediate_dict
@@ -114,7 +114,7 @@ def reduceMin(subsets, displayColumns, groupedBy, aggregatorColumn, message):
     intermediate_dict = {}
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).min(aggregatorColumn)
-    intermediate_dict['message'] = "The final output is then: "
+    intermediate_dict['message'] = "The final output is then a concatenation of the groupby of these intermediate results."
     intermediate_dict['value'] = total_df.to_json(orient='table')
     message['final_result'] = intermediate_dict
     return message
@@ -125,7 +125,7 @@ def reduceAvg(subsets, displayColumns, groupedBy, aggregatorColumn, message):
     intermediate_dict = {}
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).mean(aggregatorColumn)
-    intermediate_dict['message'] = "The final output is then: "
+    intermediate_dict['message'] = "The final output is then a concatenation of the groupby of these intermediate results."
     intermediate_dict['value'] = total_df.to_json(orient='table')
     message['final_result'] = intermediate_dict
     return message
@@ -136,7 +136,7 @@ def reduceCount(subsets, displayColumns, groupedBy, aggregatorColumn, message):
     intermediate_dict = {}
     total_df = pd.concat(subsets)
     total_df = total_df[displayColumns].groupby(groupedBy).sum(aggregatorColumn)
-    intermediate_dict['message'] = "The final output is then: "
+    intermediate_dict['message'] = "The final output is then a concatenation of the groupby of these intermediate results."
     intermediate_dict['value'] = total_df.to_json(orient='table')
     message['final_result'] = intermediate_dict
     return message

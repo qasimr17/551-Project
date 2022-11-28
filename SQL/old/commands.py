@@ -1,12 +1,11 @@
 import mysql.connector
 import pandas as pd
-import streamlit as st 
+# import streamlit as st 
 from datetime import datetime
+import sys
 
 
 # creating a view for easier implementation of commands
-
-
 DROP_VIEW_QUERY = "DROP VIEW IF EXISTS simplified;"
 CREATE_VIEW_QUERY = "CREATE VIEW simplified AS (SELECT m.id, m.type, m.name, d.parent FROM meta_data m LEFT OUTER JOIN dir_structure d ON m.id = d.child);"
 
@@ -19,12 +18,12 @@ CREATE_VIEW_QUERY = "CREATE VIEW simplified AS (SELECT m.id, m.type, m.name, d.p
 def partitionErrorOutput(flag, path):
 
     if flag == -1:
-        st.subheader('Root is a special directory. No partitions exist for a Directory.') 
+        print('Root is a special directory. No partitions exist for a Directory.') 
     elif flag == -2:
-        st.subheader('This file does not exist.') 
+        print('This file does not exist.') 
     elif flag == -3:
         name = path.split('/')[-1] 
-        st.subheader(f"{name} is a Directory. No partitions exist for a Directory.")
+        print(f"{name} is a Directory. No partitions exist for a Directory.")
     return
 
 def pathValidatorMakeDir(FULL_PATH, cursor):
@@ -72,7 +71,7 @@ def pathValidatorMakeDir(FULL_PATH, cursor):
                 return 1
 
         if not validator_helper(parent, currentFile):
-            print("Invalid Path")
+            # print("Invalid Path")
             return -2 
 
         # else, get the id of this child 
@@ -131,7 +130,7 @@ def ListFiles(FULL_PATH, cursor=None):
     """ Takes as input a full path (string) to a location, and returns all the files/folders
     that exist in that location."""
     if cursor is None:
-        db = mysql.connector.connect(host="localhost", user="root", passwd="HarryPotter7", database="namenode")
+        db = mysql.connector.connect(host="localhost", user="root", passwd="Garden@eden97", database="namenode")
         cursor = db.cursor(buffered=True)
 
     cleansed_path = FULL_PATH.rstrip('/')
@@ -187,8 +186,6 @@ def ListFiles(FULL_PATH, cursor=None):
 
 # HAVE TO MAKE A CONSTRAINT SUCH THAT A USER CANNOT KEEP ADDING THE SAME NAMED FILE IN THE SAME PATH
 def makeDir(FULL_PATH, cursor, db):
-
-
     cleansed_path = FULL_PATH.rstrip('/')
     files = cleansed_path.split('/')
 
@@ -215,55 +212,56 @@ def makeDir(FULL_PATH, cursor, db):
             DIR_STR_QUERY = f"INSERT INTO dir_structure VALUES ({parentID}, {childID});"
             cursor.execute(DIR_STR_QUERY)
             db.commit()
-            st.text("All good. Folder created.")
+            # print("All good. Folder created.")
+            return {"flag":1,"desc":"Folder created successfully"}
             
     elif flag == -1:
-        st.text("Folder already exists.")
+        # print("Folder already exists.")
+        return {"flag":-1,"desc":"Folder already exists"}
     
     elif flag == -2:
-        st.text("Invalid path entered.")
-    return
+        # print("Invalid path entered.")
+        return {"flag":-1,"desc":"Invalid path entered"}
+    return flag
 
 
 def cat(FULL_PATH, cursor, cursor2):
 
     cleansed_path = FULL_PATH.rstrip('/')
     if not cleansed_path:
-        print('Root is a special directory.')
-        return
+        # print('Root is a special directory.')
+        
+        return {"flag":-1,"desc":"Root is a special directory"}
 
     id = getFolderID(cleansed_path, cursor)
     if id == False:
-        print("This file does not exist")
-        return 
+        # print("This file does not exist")
+        return {"flag":-1,"desc":"File does not exist"}
 
     name = cleansed_path.split('/')[-1]
     cursor.execute(f"SELECT type FROM meta_data WHERE id = {id};")
     type = cursor.fetchone()[0]
     if type == "FOLDER":
-        print(f"{name} is a Directory.")
-        return
+        # print(f"{name} is a Directory.")
+        # return
+        return {"flag":-1,"desc":f"{name} is a Directory"}
 
-    cursor.execute(f"SELECT partitions FROM meta_data WHERE id = {id};")
-    partitions = cursor.fetchone()[0]
-    partitions = partitions.split(',')
+    cursor.execute(f"SELECT partition_table FROM meta_data WHERE id = {id};")
+    nameTable = cursor.fetchone()[0]
 
-    dataframes = []
-    for partition in partitions:
-        # df = pd.DataFrame(cursor2.execute(f"SELECT * FROM {partition};"))
-        cursor2.execute(f"SELECT * FROM {partition};")
-        cols = list(cursor2.column_names)
-        rows = []
-        for row in cursor2:
-            r = list(row)
-            rows.append(r)
-        df = pd.DataFrame(rows, columns=cols)
-        dataframes.append(df)
-    total = pd.concat(dataframes)
-    total["sort_index"] = pd.to_numeric(total["sort_index"])
-    total.sort_values(by=['sort_index'], inplace=True, ignore_index=True)
-    total.drop(['sort_index'],axis=1, inplace=True)
-    return total 
+    cursor2.execute(f"SELECT * FROM {nameTable};")
+    cols = list(cursor2.column_names)
+    rows = []
+    for row in cursor2:
+        r = list(row)
+        rows.append(r)
+    df = pd.DataFrame(rows, columns=cols)
+    df["sort_index"] = pd.to_numeric(df["sort_index"])
+    df.sort_values(by=['sort_index'], inplace=True, ignore_index=True)
+    df.drop(['sort_index'],axis=1, inplace=True)
+    
+    return df.to_json(orient = 'table') 
+
     
 
 def getPartitionLocations(FULL_PATH, cursor):
@@ -271,40 +269,46 @@ def getPartitionLocations(FULL_PATH, cursor):
     cleansed_path = FULL_PATH.rstrip('/')
     if not cleansed_path:
         # print('Root is a special directory. No partitions exist for a Directory.')
-        return -1 
+        # return -1 
 
+        return (None,{"flag":-1,"desc":"Root is a special directory"})
     id = getFolderID(cleansed_path, cursor=cursor)
     if id == False:
         # print("This file does not exist")
-        return -2 
+        # return -2 
+        return (None,{"flag":-1,"desc":"File does not exist"})
 
     name = cleansed_path.split('/')[-1]
     cursor.execute(f"SELECT type FROM meta_data WHERE id = {id};")
     type = cursor.fetchone()[0]
     if type == "FOLDER":
         # print(f"{name} is a Directory. No partitions exist for a Directory.")
-        return -3 
+        return (None,{"flag":-1,"desc":f"{name} is a directory"})
 
     cursor.execute(f"SELECT partitions FROM meta_data WHERE id = {id};")
     partitions = cursor.fetchone()[0]
-    partitions = partitions.split(',')
-    
-    # st.text(f"Partitions for the file {FULL_PATH} are: {partitions}")
+    # print(partitions)
+    if partitions:
+        partitions = partitions.split(',')
+
+    cursor.execute(f"SELECT partition_table FROM meta_data WHERE id = {id};")
+    nameTable = cursor.fetchone()[0]
+    # print(f"Partitions for the file {FULL_PATH} are: {partitions}")
     # return partitions
-    return partitions
+    return (nameTable,partitions)
     
 
 def rm(FULL_PATH, cursor, cursor2, db, db2):
 
     id = getFolderID(FULL_PATH, cursor=cursor)
     if id == False:
-        st.text('Invalid path entered.')
-        return
-    partitions = getPartitionLocations(FULL_PATH, cursor=cursor)
-    if partitions in [-1, -2, -3]:
-        partitionErrorOutput(partitions, FULL_PATH)
-        return 
-    
+        # print('Invalid path entered.')
+        return {"flag":-1,"desc":"File does not exist"}
+    nameTable, partitions = getPartitionLocations(FULL_PATH, cursor=cursor)
+
+    if nameTable == None:
+        return partitions
+
     # Delete from dir_structure table  
     cursor.execute(f"DELETE FROM dir_structure WHERE child = {id};")
     db.commit()
@@ -312,27 +316,29 @@ def rm(FULL_PATH, cursor, cursor2, db, db2):
     # Next, delete from meta_data table 
     cursor.execute(f"DELETE FROM meta_data WHERE id = {id};")
     db.commit()
-    # Then, delete all the relevant partition tables
-    for partition in partitions:
-        cursor2.execute(f"DROP TABLE {partition};")
-        db2.commit()
-    st.text("File removed. Refresh to see changes.")
-    return 
+
+
+    # Then, delete the table from datanode
+    cursor2.execute(f"DROP TABLE {nameTable};")
+    db2.commit()
+
+    return {"flag":1,"desc":"File removed"}
 
 
 def readPartition(FULL_PATH, partition_num, cursor, cursor2):
 
     # Make sure that the partition number entered is actually the correct one for the file 
-    partitions = getPartitionLocations(FULL_PATH=FULL_PATH, cursor=cursor)
-    if partitions in [-1, -2, -3]:
-        partitionErrorOutput(partitions, FULL_PATH)
-        return 
+    nameTable,partitions = getPartitionLocations(FULL_PATH=FULL_PATH, cursor=cursor)
+
+    #if table name doesnt exists, return the error json
+    if nameTable == None:
+        return partitions
+
+
     if partition_num not in partitions:
-        print("Parition location and file path do not match.")
-        return 
-    
-    print(f"Retreiving data for {FULL_PATH}:")
-    cursor2.execute(f"SELECT * FROM {partition_num};")
+        return {"flag":-1,"desc":"Partition does not exist"}
+
+    cursor2.execute(f"SELECT * FROM {nameTable} PARTITION ({partition_num});")
     cols = list(cursor2.column_names)
     rows = []
     for row in cursor2: 
@@ -340,47 +346,179 @@ def readPartition(FULL_PATH, partition_num, cursor, cursor2):
         rows.append(r)
     df = pd.DataFrame(rows, columns=cols)
     df.drop(columns=['sort_index'], inplace=True)
-    # print(df.head())  
-    return df 
+    return df.to_json(orient = 'table')   
+
+def put(LOCAL_PATH, FULL_PATH, cursor, cursor2,db, db2, partitionNum = 5 ,hashCol = 'sort_index'):
+    
+    #full_path has path till parent
+    cleansed_path = FULL_PATH.rstrip('/')
+    files = cleansed_path.split('/')
+    FILE_TO_ADD = LOCAL_PATH.split('/')[-1]
+
+
+    # First, check if the full path is valid or not
+    if files == ['']: #for root directory 
+        flag = 1
+    else:
+        flag = pathValidatorMakeDir(FULL_PATH=f'{FULL_PATH}/{FILE_TO_ADD}', cursor=cursor)
+    
+    if flag == 1:
+        
+        #check if file sent is csv
+        if LOCAL_PATH.split('.')[-1] != 'csv':
+            return {"flag":-1,"desc":"File type not accomodated. Please try again with csv"}
+
+        #reading csv and check if local path is correct   
+        try:
+            df = pd.read_csv(LOCAL_PATH)
+        except FileNotFoundError:
+            # print("Local file not found")
+            return {"flag":-1,"desc":"Local file not found"}
+        except pd.errors.EmptyDataError:
+            print("No data in local file")
+            return {"flag":-1,"desc":"No data in local file"}
+        except pd.errors.ParserError:
+            # print("Parse error, please check your file")
+            return {"flag":-1,"desc":"Parse error, please check your file"}
+        except Exception as e:
+            # print(f"Error processing your file. \nThe error: {e}")
+            return {"flag":-1,"desc":f"Error processing your file. \nThe error: {e}"}
+
+        #adding an index to allow sorting when reading later
+        df['sort_index'] = range(0,len(df))
+        if df[hashCol].dtype != int:
+            # print("Hashing column can only be int. Please try again")
+            
+            return {"flag":-1,"desc":"Hashing column can only be int"}
+        
+        #insert into namenode metadata
+        PATH_OF_PARENT = "/".join(files)
+        if not PATH_OF_PARENT: PATH_OF_PARENT = '/'
+        parentID = getFolderID(PATH_OF_PARENT, cursor=cursor)
+
+        # Now, we first persist the meta data of the file to the meta_data table 
+        META_DATA_QUERY = f'INSERT INTO meta_data (name, type, partition_table, partitions, ctime) VALUES ("{FILE_TO_ADD}", "FILE", NULL, NULL, "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}");'
+        cursor.execute(META_DATA_QUERY)
+        db.commit()
+            
+        # Now, we add information to the dir_structure table 
+        CHILD_ID_QUERY = "SELECT MAX(id) FROM meta_data;"
+        cursor.execute(CHILD_ID_QUERY)
+        childID = cursor.fetchone()[0]
+        DIR_STR_QUERY = f"INSERT INTO dir_structure VALUES ({parentID}, {childID});"
+        cursor.execute(DIR_STR_QUERY)
+        db.commit()
+
+        #create table
+        #creating sql command for create table
+        createTable = ''
+        for col in df.columns:
+            dtype = ''
+            if df[col].dtype == int:
+                dtype = 'int'
+            elif df[col].dtype == float:
+                dtype = 'float'
+            elif df[col].dtype == bool:
+                dtype = 'bool'
+            else:
+                dtype = 'text'
+            createTable += f'{col} {dtype}, '
+
+        if hashCol == 'sort_index':
+            createTable += f'PRIMARY KEY (sort_index)'
+        else:
+            createTable += f'PRIMARY KEY (sort_index,{hashCol})'
+    
+        #table name: parentname_childname
+        nameTable = f't_{parentID}_{childID}'
+
+        #create in database
+        DROP_TABLE = f'DROP TABLE IF EXISTS {nameTable}'
+        cursor2.execute(DROP_TABLE)
+
+        CREATE_TABLE = f'''CREATE TABLE {nameTable} ({createTable}) 
+                            PARTITION BY HASH({hashCol})
+                            PARTITIONS {partitionNum};'''
+        cursor2.execute(CREATE_TABLE)
+        db2.commit()
+
+
+        # insert data to table
+        cols = "`,`".join([str(i) for i in df.columns.tolist()])
+
+        # Insert DataFrame recrds one by one.
+        for i,row in df.iterrows():
+            sql = f"INSERT INTO {nameTable} (`" +cols + "`) VALUES (" + "%s,"*(len(row)-1) + "%s)"
+            cursor2.execute(sql, tuple(row))
+
+        db2.commit()
+        
+        #Adding partition details to meta_data
+        cursor2.execute(f'EXPLAIN SELECT * FROM {nameTable}')
+        result = cursor2.fetchone()
+        partitions = result[3]
+
+        UPDATE_META_DATA = f"UPDATE meta_data SET partition_table = '{nameTable}', partitions = '{partitions}' WHERE id = {childID}"
+        cursor.execute(UPDATE_META_DATA)
+        db.commit()
+
+        return {"flag":1,"desc":"File uploaded successfully"}
+            
+    elif flag == -1:
+        # print("Folder already exists.")
+        return {"flag":-1,"desc":"Folder already exists"}
+    
+    elif flag == -2:
+        # print("Invalid path entered.")
+        return {"flag":-1,"desc":"Invalid path entered"}
+    return flag
 
 # will need to change this to incorporate put command as well 
 # E.g may have to add a fourth argument to this function i.e numOfPartitions
-def main(cmd, path, partitionNum=None):
+def commands_main(cmd, path, partitionNum=None, local=None, hashCol = 'sort_index'):
 
-    db = mysql.connector.connect(host="localhost", user="root", passwd="HarryPotter7", database="namenode")
-    db2 = mysql.connector.connect(host="localhost", user="root", passwd="HarryPotter7", database="datanode")
+    db = mysql.connector.connect(host="localhost", user="root", passwd="hazard97", database="namenode")
+    db2 = mysql.connector.connect(host="localhost", user="root", passwd="hazard97", database="datanode")
 
     cursor = db.cursor(buffered=True)
     cursor2 = db2.cursor(buffered=True)
 
     if cmd == "readPartition":
         df = readPartition(path, partitionNum, cursor, cursor2)
-        st.dataframe(df)
+        # print(df)
+        return df
 
     elif cmd == "rm":
-        rm(path, cursor, cursor2, db, db2)
+        return rm(path, cursor, cursor2, db, db2)
 
     elif cmd == "getPartitionLocations":
-        flag = getPartitionLocations(path, cursor)
-        if flag in [-1,-2,-3]:
-            partitionErrorOutput(flag, path)
-            return
-        else:
-            partitions = flag 
-            st.subheader(f"Partitions for the file {path} are:")
-            st.text(f"{partitions}") 
+        nameTable,partitions = getPartitionLocations(path, cursor)
+        
+        #if error, returning error json
+        if nameTable == None:
+            return partitions
 
+        else:
+            json = {"partitions":partitions}
+            return json
+            
     
     elif cmd == "cat":
         df = cat(path, cursor, cursor2)
-        st.subheader("View your file below:")
-        st.dataframe(df)
+        # print(df)
+        return df
+        # print("View your file below:")
+        
     
+    elif cmd == "put":
+        return put(local,path,cursor,cursor2,db,db2,partitionNum, hashCol)
+
     elif cmd == "mkdir":
-        makeDir(path, cursor, db)
+        return makeDir(path, cursor, db)
 
     elif cmd == "ls":
-        ListFiles(path, cursor)
+        json = {"files":ListFiles(path, cursor)}
+        return json
 
     elif cmd == "getFolderID":
         return getFolderID(path, cursor)
@@ -394,8 +532,5 @@ def main(cmd, path, partitionNum=None):
     db2.close()
     return 
 
-
-
-# main('mkdir', '/wow')
 
 

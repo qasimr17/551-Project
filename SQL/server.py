@@ -150,7 +150,7 @@ def pathValidatorMakeDir(FULL_PATH):
 def getFolderID(PATH):
 
     if PATH == '/':
-        return 1 
+        return ROOT_ID
 
     pathsList = PATH.split('/')
     def validator_helper(parent, fname):

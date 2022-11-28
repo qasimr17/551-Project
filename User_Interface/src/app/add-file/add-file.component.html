@@ -1,0 +1,28 @@
+<div id="modal-content-wrapper">
+    <header id="modal-header">
+        <h1 id="modal-title">Upload Your File</h1>
+    </header>
+    <form (ngSubmit)="create(name.value, no.value, field.value)" method="post" enctype="multipart/form-data">
+
+    <section id="modal-body" class="add-file" style="padding-bottom: 10px;">
+        <span class="upload-field add-file-component">
+            <input #name class="ng-hide" id="input-file-id" type="file"  accept=".csv" (change)="upload($event)"/>
+        </span>
+        <span class="add-file-component">
+            <mat-label>No. of partitions:</mat-label>
+            <input class="input-field" #no id="input-file-id" type="number" min="0"/>
+        </span>
+        <span class="add-file-component">
+            <mat-label>Partition Field:</mat-label>
+            <input class="input-field" #field id="input-file-id" type="text"/>   
+        </span>
+        
+        </section>
+    
+    <footer id="modal-footer">
+        <button type="submit" mat-raised-button id="modal-action-button" >Create</button>
+        <button mat-raised-button id="modal-cancel-button" (click)="closeModal()">Cancel</button>
+    </footer>
+</form>
+</div> 
+<lib-ng-toast></lib-ng-toast>

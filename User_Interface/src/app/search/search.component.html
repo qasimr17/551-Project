@@ -1,0 +1,235 @@
+<div id="modal-content-wrapper">
+    <div *ngIf="!showData">
+        <header id="modal-header">
+            <h1 id="modal-title">Select Parameters</h1>
+        </header>
+        <section id="modal-body">
+            <div class="search-component">
+                <span class="search-field">
+                    <mat-label>Fields:  </mat-label>
+                    <mat-form-field appearance="fill">
+                        <mat-select [(value)]="selectedColumns" multiple>
+                            <mat-option *ngFor="let column of columns" [value]="column">
+                                {{column}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </span>
+            </div>
+    
+            <div class="search-component">
+                <span class="search-field">
+                    <mat-label>Aggregator:  </mat-label>
+                    <mat-form-field appearance="fill">
+                        <mat-select [(value)]="selectedAggregator">
+                            <mat-option *ngFor="let aggregator of aggregators" [value]="aggregator">
+                                {{aggregator}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </span>
+        
+                <span class="search-field">
+                    <mat-label>Aggregator Column:  </mat-label>
+                    <mat-form-field appearance="fill">
+                        <mat-select [(value)]="selectedAggregatorColumn">
+                            <mat-option *ngFor="let column of selectedColumns" [value]="column">
+                                {{column}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </span>
+            </div>
+            <div class="search-component" *ngFor="let filter of columnFilters; let i = index">
+                <span class="search-field">
+                    <mat-label>Filter Field {{i+1}}:  </mat-label>
+                <mat-form-field appearance="fill">
+                    <mat-select [(value)]="filter.column">
+                        <mat-option *ngFor="let column of columns" [value]="column">
+                            {{column}}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+                </span>
+                
+                <span class="search-field">
+                    <mat-label>Filter Operator {{i+1}}:  </mat-label>
+                <mat-form-field appearance="fill">
+                    <mat-select [(value)]="filter.operator">
+                        <mat-option *ngFor="let operator of operators" [value]="operator.name">
+                            {{operator.value}}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+                </span>
+    
+                <span class="search-field">
+                    <mat-label>Filter Value {{i+1}}:  </mat-label>
+                        <input class="input-field" matInput type="text" [(ngModel)]="filter.value">
+                </span>
+
+                <span class="search-field">
+                    <mat-label>Filter Condition {{i+1}}:  </mat-label>
+                <mat-form-field appearance="fill">
+                    <mat-select [(value)]="filter.condition" (selectionChange)="addFilter()">
+                        <mat-option *ngFor="let condition of conditions" [value]="condition">
+                            {{condition}}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+                </span>
+                <!-- <span>
+                    <button mat-raised-button id="modal-action-button" (click)="addFilter()">Add Filter</button>
+                </span> -->
+            </div>
+            
+            <div class="search-component">
+                <span class="search-field">
+                    <mat-label>Distinct Columns:  </mat-label>
+                    <mat-form-field appearance="fill">
+                        <mat-select [(value)]="selectedDistinctColumns" multiple>
+                            <mat-option *ngFor="let column of selectedColumns" [value]="column">
+                                {{column}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </span>
+            </div>
+            <div class="search-component">
+                <span class="search-field">
+                    <mat-label>Group By:  </mat-label>
+                    <mat-form-field appearance="fill">
+                        <mat-select [(value)]="selectedGroupByColumns" multiple>
+                            <mat-option *ngFor="let column of selectedColumns" [value]="column">
+                                {{column}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </span>
+            </div>
+    
+        </section>
+        <footer id="modal-footer">
+            <button mat-raised-button id="modal-action-button" (click)="search()">Create</button>
+            <button mat-raised-button id="modal-cancel-button" (click)="closeModal()">Cancel</button>
+        </footer>
+    </div>
+
+    <!-- <div *ngIf="showData" style="overflow: auto;">
+        <fa-icon [icon] = 'faCross' (click)="closeModal()" style="display: flex; justify-content: flex-end;"></fa-icon>
+        <header id="modal-header">
+            <h1 id="modal-title">Query Result</h1>
+            <button mat-raised-button id="modal-action-button" (click)="explain()">Explain</button>
+            
+        </header>
+        <section id="modal-body" style="overflow: auto;">
+            <div class="table-responsive">
+                <table mat-table [dataSource]="data" class="mat-elevation-z8">
+                  <ng-container [matColumnDef]="column" *ngFor="let column of columns">
+                    <th mat-header-cell *matHeaderCellDef> {{column}} </th>
+                    <td mat-cell *matCellDef="let element"> {{element[column]}} </td>
+                  </ng-container>
+                
+                  <tr mat-header-row *matHeaderRowDef="columns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+                </table>
+                </div>
+        </section>
+        <footer id="modal-footer">
+            
+        </footer>
+    </div> -->
+    
+    
+    <div *ngIf="showData" style="overflow: auto;">
+        <fa-icon [icon] = 'faCross' (click)="closeModal()" style="display: flex; justify-content: flex-end;"></fa-icon>
+        <header id="modal-header">
+            <h1 id="modal-title" *ngIf="displayExplain">Query Result Explanation</h1>
+            <h1 id="modal-title" *ngIf="!displayExplain">Query Result</h1>
+            <button mat-raised-button id="modal-action-button" *ngIf="!displayExplain" (click)="explain()">Explain</button>
+            
+        </header>
+        <section id="modal-body" style="overflow: auto;">
+            <span *ngIf="displayExplain">
+                <span *ngIf="intermediateTable">
+                    <div class="table-responsive" *ngFor="let intermediate of inter; let i = index">
+                        <p>
+                            Partition {{i}}
+                        </p>
+                        
+                        <p>
+                        {{intermediate['message']}}
+                        </p>
+                        <table mat-table [dataSource]="getJsonData(intermediate['value'])" class="mat-elevation-z8">
+                          <ng-container [matColumnDef]="column" *ngFor="let column of columns">
+                            <th mat-header-cell *matHeaderCellDef> {{column}} </th>
+                            <td mat-cell *matCellDef="let element"> {{element[column]}} </td>
+                          </ng-container>
+                        
+                          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+                          <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+                        </table>
+                        </div>
+
+                </span>
+                <span *ngIf="!intermediateTable">
+                    <div *ngFor="let intermediate of inter let i = index">
+                        <div>
+                            Partition {{i}}
+                            <p>
+                                {{intermediate['message']}} {{intermediate['value']}}
+                            </p>
+                            <!-- <p>
+                                Result: {{intermediate['value']}}
+                            </p> -->
+        
+                        </div>
+                    </div>
+                </span>
+
+            </span>
+            <div *ngIf="!finalTable">
+                <div>
+                    Final Result
+                    <p>
+                       {{jsonData['final_result']['message']}} {{jsonData['final_result']['value']}}
+                    </p>
+                    <!-- <p>
+                        Result: {{jsonData['final_result']['value']}}
+                    </p> -->
+                </div>
+            </div>
+            <div *ngIf="finalTable">
+                <div class="table-responsive" *ngIf="!intermediateTable">
+                    <table mat-table [dataSource]="finalData['data']" class="mat-elevation-z8">
+                      <ng-container [matColumnDef]="column" *ngFor="let column of columns">
+                        <th mat-header-cell *matHeaderCellDef> {{column}} </th>
+                        <td mat-cell *matCellDef="let element"> {{element[column]}} </td>
+                      </ng-container>
+                    
+                      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+                      <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+                    </table>
+                    </div>
+                    <div *ngIf="intermediateTable">
+                        <p>
+                            {{final['message']}}
+                        </p>
+                    </div>
+
+            </div>
+        </section>
+        <footer id="modal-footer">
+            
+        </footer>
+    </div>
+</div>
+
+<ngx-spinner
+  bdColor="rgba(51,51,51,0.8)"
+  size="medium"
+  color="#fff"
+  type="ball-scale-multiple"
+>
+  <p style="font-size: 20px; color: white">Loading...</p>
+</ngx-spinner>

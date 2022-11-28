@@ -1,0 +1,45 @@
+<div id="modal-content-wrapper">
+    <div *ngIf="!showData">
+        <header id="modal-header">
+            <h1 id="modal-title">Choose Partition</h1>
+        </header>
+        <section id="modal-body">
+            <mat-form-field appearance="fill">
+                <mat-select [(value)]="selectedPartition">
+                    <mat-option *ngFor="let partition of partitions" [value]="partition">
+                        {{partition}}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </section>
+        <footer id="modal-footer">
+            <button mat-raised-button id="modal-action-button" (click)="view()">View</button>
+            <button mat-raised-button id="modal-cancel-button" (click)="closeModal()">Cancel</button>
+        </footer>
+    </div>
+
+    <div *ngIf="showData" style="overflow: auto;">
+        <fa-icon [icon] = 'faCross' (click)="closeModal()" style="display: flex; justify-content: flex-end;"></fa-icon>
+        <header id="modal-header">
+            <h1 id="modal-title">Partition {{selectedPartition}}</h1>
+            
+        </header>
+        <section id="modal-body" style="overflow: auto;">
+            <div class="table-responsive">
+                <table mat-table [dataSource]="data" class="mat-elevation-z8">
+                  <ng-container [matColumnDef]="column" *ngFor="let column of columns">
+                    <th mat-header-cell *matHeaderCellDef> {{column}} </th>
+                    <td mat-cell *matCellDef="let element"> {{element[column]}} </td>
+                  </ng-container>
+                
+                  <tr mat-header-row *matHeaderRowDef="columns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+                </table>
+                </div>
+        </section>
+        <footer id="modal-footer">
+            
+        </footer>
+    </div>
+    
+</div> 

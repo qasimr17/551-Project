@@ -1,0 +1,96 @@
+.tp-container {
+    position: absolute;
+    top: 65px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #eee;
+ }
+ .tp-section {
+    display: flex;
+    align-content: center;
+    align-items: center;
+    height: 60px;
+    width:100px;   
+ }
+
+ .filler {
+    flex: 1 1 auto;
+ }
+ .gap {
+    margin-right: 10px;
+    padding-right: 10px;
+ }
+
+ .icon-flexbox{
+    display: flex;
+    padding: 2rem;
+    margin: 10px;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: flex-start;
+ }
+ .icon{
+    padding: 10px;
+ }
+ .icon-name{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    cursor: pointer;
+ }
+ .back-button{
+    cursor: pointer;
+    font-size: 25px;
+    padding: 3rem;
+    margin-top: 3rem;
+ }
+ .mat-toolbar.mat-primary{
+    background: #960409;
+ }
+.logo{
+   width: 130px;
+   height: 30px;
+}
+.table-responsive {
+   display: block;
+   width: 97vw;
+   overflow-x: auto;
+   padding-left: 1vw;
+   padding-right: 1vw;
+   .mat-table {
+       width: 100%;
+       max-width: 100%;
+       margin-bottom: 1rem;
+       display: table;
+       border-collapse: collapse;
+       margin: 0px;
+   }
+   .mat-row,
+   .mat-header-row {
+       display: table-row;
+   }
+   .mat-cell,
+   .mat-header-cell {
+       word-wrap: initial;
+       display: table-cell;
+       padding: 0px 5px;
+       line-break: unset;
+       width: auto;
+       white-space: nowrap;
+       overflow: hidden;
+       vertical-align: middle;
+   }
+ }
+
+ .sticky{
+   position: fixed;
+   top: 0;
+   // overflow: hidden;
+   z-index: 10;
+ }
+
+ button{
+   background-color: #790202;
+ }

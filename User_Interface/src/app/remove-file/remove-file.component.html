@@ -1,0 +1,22 @@
+<div id="modal-content-wrapper">
+    <header id="modal-header">
+        <h1 id="modal-title">Choose a File:</h1>
+    </header>
+    <section id="modal-body">
+        <span>
+            <mat-form-field appearance="fill">
+                <mat-select [(value)]="selectedFile">
+                    <mat-option *ngFor="let child of children" [value]="child">
+                        {{child}}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </span>
+    </section>
+    <footer id="modal-footer">
+        <button mat-raised-button id="modal-action-button" (click)="rm()">Delete</button>
+        <button mat-raised-button id="modal-cancel-button" (click)="closeModal()">Cancel</button>
+    </footer>
+</div> 
+
+<lib-ng-toast></lib-ng-toast>

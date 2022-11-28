@@ -274,7 +274,6 @@ def ls(FULL_PATH):
         cursor = dir_structure.aggregate(QUERY)
         for row in cursor:
             children.append(row['joinedResult'][0]['name'])
-        print("In validator_helper",children)
         return fname in children
 
     def getFileID(parent, fname):
@@ -305,7 +304,6 @@ def ls(FULL_PATH):
         cursor = dir_structure.aggregate(QUERY)
         for x in cursor:
             id = x['joinedResult'][0]['_id']
-        print("In validator_helper", id)
         return id
 
     def recursive(parent, paths_list, idx):
@@ -338,7 +336,6 @@ def ls(FULL_PATH):
             cursor = dir_structure.aggregate(QUERY)
             for row in cursor:
                 files.append(row['joinedResult'][0]['name'])
-            print("In recursive",files)
             return files
 
         else:
@@ -421,11 +418,13 @@ def cat(FULL_PATH):
     partitions = metadata.find({'_id': ObjectId(id)},{'partitions': 1}).next()['partitions']
     partitions = partitions.split(',')
 
+    parent_id = getFolderID('/'.join(cleansed_path.split('/')[0:-1]))
+    collection_name = str(parent_id) +'_'+ str(folder['_id'])+'_'
     dataframes = []
     for partition in partitions:
         # df = pd.DataFrame(cursor2.execute(f"SELECT * FROM {partition};"))
         rows = []
-        cursor = Datanode[partition].find({})
+        cursor = Datanode[collection_name+partition].find({})
         df = pd.DataFrame(list(cursor))
 
         # cursor2.execute(f"SELECT * FROM {partition};")
@@ -438,10 +437,9 @@ def cat(FULL_PATH):
         dataframes.append(df)
     total = pd.concat(dataframes)
     # total["sort_index"] = pd.to_numeric(total["sort_index"])
-    # total.sort_values(by=['sort_index'], inplace=True, ignore_index=True)
-    total.drop(['_id'],axis=1, inplace=True)
-
-    return total.to_json(orient = 'table') 
+    total.sort_values(by=['sort_index'], inplace=True, ignore_index=True)
+    total.drop(['_id', 'sort_index'],axis=1, inplace=True)
+    return total.to_json(orient='table')
 
 def getPartitionLocations(FULL_PATH):
 
@@ -493,9 +491,12 @@ def rm(FULL_PATH):
     # cursor.execute(f"DELETE FROM meta_data WHERE id = {id};")
     # db.commit()
     # Then, delete all the relevant partition tables
-    for partition in partitions:
+    parent_id = getFolderID('/'.join(cleansed_path.split('/')[:-1]))
+    collection_name = str(parent_id) + '_' + str(id) + '_'
+    for partition in partitions['partitions']:
         # cursor2.execute(f"DROP TABLE {partition};")
-        cursor = Datanode[partition].drop()
+        
+        cursor = Datanode[collection_name+partition].drop()
         # db2.commit()
     
     cursor = dir_structure.delete_one({'child': ObjectId(id)})
@@ -508,7 +509,7 @@ def rm(FULL_PATH):
 def readPartition(FULL_PATH, partition_num):
 
     # Make sure that the partition number entered is actually the correct one for the file 
-    partitions = getPartitionLocations(FULL_PATH=FULL_PATH)
+    partitions = getPartitionLocations(FULL_PATH=FULL_PATH)['partitions']
     if partitions in [-1, -2, -3]:
         partitionErrorOutput(partitions, FULL_PATH)
         return 
@@ -524,20 +525,25 @@ def readPartition(FULL_PATH, partition_num):
     #     r = list(row)
     #     rows.append(r)
     # df = pd.DataFrame(rows, columns=cols)
-    cursor = Datanode[partition_num].find({})
+    cleansed_path = FULL_PATH.rstrip('/')
+    id = getFolderID(cleansed_path)
+    parent_id = getFolderID('/'.join(cleansed_path.split('/')[:-1]))
+    collection_name = str(parent_id) + '_' + str(id) + '_'
+    cursor = Datanode[collection_name+partition_num].find({})
     df = pd.DataFrame(list(cursor))
-    df.drop(columns=['_id'], inplace=True)
+    df.drop(columns=['_id', 'sort_index'], inplace=True)
     # print(df.head())  
     return df.to_json(orient = 'table') 
 
-def put(target, file_path, no_of_partitions, field = 'sort_index'):
-    
-    flag = pathValidatorMakeDir(FULL_PATH='/'.join(target.split('/')[0:-1]))
+def put(target, file_path, no_of_partitions = 5, field = 'sort_index'):
+
+    no_of_partitions = int(no_of_partitions)
+    flag = pathValidatorMakeDir(FULL_PATH=target)
     if flag == -1:
         cleansed_path = target.rstrip('/')
 
 
-        id = getFolderID(cleansed_path)
+        id = getFolderID(cleansed_path+'/'+file_path)
         # print('ID:', id)
         if id != False:
             # print("A file with same name already exists")
@@ -548,11 +554,11 @@ def put(target, file_path, no_of_partitions, field = 'sort_index'):
         data['partition'] = data[field].map(lambda x: x%no_of_partitions)
         partitions = ['p'+str(x) for x in range(no_of_partitions)]
 
-        META_DATA_QUERY = {'name': target.split('/')[-1], 'partitions': ','.join(partitions), 'ctime': datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 'folder': False}
+        META_DATA_QUERY = {'name': file_path, 'partitions': ','.join(partitions), 'ctime': datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 'folder': False}
         child_id = metadata.insert_one(META_DATA_QUERY)
         child_id = child_id.inserted_id
         # print("Inserted file ID:", child_id)
-        parent_id = getFolderID('/'.join(target.split('/')[0:-1]))
+        parent_id = getFolderID(target)
         DIR_STR_QUERY = {'parent' : ObjectId(parent_id), 'child': ObjectId(child_id)}
         cursor = dir_structure.insert_one(DIR_STR_QUERY)
         # print('Dir Structure record inserted:', cursor.inserted_id)
@@ -590,7 +596,7 @@ def put(target, file_path, no_of_partitions, field = 'sort_index'):
 # print(rm('/tejas/a/hello.csv'))
 # print(put("/tejas/Book1.csv",'Book1.csv', 3, 'aaa'))
 
-def mongo_main(cmd, path, partitionNum=None, local=None, hashCol = 'sort_index'):
+def mongo_main(cmd, path, local=None, partitionNum=None, hashCol = 'sort_index'):
 
     if cmd == "readPartition":
         return readPartition(path, partitionNum)
@@ -620,7 +626,8 @@ def mongo_main(cmd, path, partitionNum=None, local=None, hashCol = 'sort_index')
         
     
     elif cmd == "put":
-        return put(local,path,partitionNum, hashCol)
+        print('in mongo_main calling put')
+        return put(path,local,partitionNum, hashCol)
 
     elif cmd == "mkdir":
         return makeDir(path)

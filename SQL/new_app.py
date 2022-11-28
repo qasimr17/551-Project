@@ -1,6 +1,6 @@
 from flask import Flask, Blueprint, request, redirect,url_for, render_template
-from commands import commands_main
-from server import mongo_main
+from new_commands import commands_main
+# from server import mongo_main
 from flask import jsonify
 from flask_cors import CORS, cross_origin
 import pandas as pd 
@@ -70,13 +70,16 @@ def put():
     # print(data[1])
     # df = pd.DataFrame(data=data[1:], columns=list(cols))
     # print(df)
-    print(f"Path is {path}")
+    print(path)
     path = path.split('/')
     filename = path[-1]
 
     path = path[:-1]
     path = '/'.join(path)
-    print(f"Path is {path}")
+    if not path:
+        path = '/'
+    print("second path" , path)
+    
     file.save(filename)
     json = commands_main("put",path,partitionNum,filename,hashCol)
     return json

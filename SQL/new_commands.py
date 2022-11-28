@@ -130,7 +130,7 @@ def ListFiles(FULL_PATH, cursor=None):
     """ Takes as input a full path (string) to a location, and returns all the files/folders
     that exist in that location."""
     if cursor is None:
-        db = mysql.connector.connect(host="localhost", user="root", passwd="Garden@eden97", database="namenode")
+        db = mysql.connector.connect(host="localhost", user="root", passwd="HarryPotter7", database="namenode")
         cursor = db.cursor(buffered=True)
 
     cleansed_path = FULL_PATH.rstrip('/')
@@ -354,14 +354,21 @@ def put(LOCAL_PATH, FULL_PATH, cursor, cursor2,db, db2, partitionNum = 5 ,hashCo
     cleansed_path = FULL_PATH.rstrip('/')
     files = cleansed_path.split('/')
     FILE_TO_ADD = LOCAL_PATH.split('/')[-1]
+    print("These are the files: ",files)
 
 
     # First, check if the full path is valid or not
     if files == ['']: #for root directory 
-        flag = 1
+        flag = pathValidatorMakeDir(FULL_PATH=f'/{FILE_TO_ADD}', cursor=cursor)
+        print(f'/{FILE_TO_ADD}')
+        print(flag)
+        print("if")
     else:
         flag = pathValidatorMakeDir(FULL_PATH=f'{FULL_PATH}/{FILE_TO_ADD}', cursor=cursor)
-    
+        print(f'{FULL_PATH}/{FILE_TO_ADD}')
+        print(flag)
+        print("else")
+
     if flag == 1:
         
         #check if file sent is csv
@@ -386,10 +393,14 @@ def put(LOCAL_PATH, FULL_PATH, cursor, cursor2,db, db2, partitionNum = 5 ,hashCo
 
         #adding an index to allow sorting when reading later
         df['sort_index'] = range(0,len(df))
+        if hashCol not in df.columns:
+            return {"flag":-1,"desc":"Hashing column not in the file"}
         if df[hashCol].dtype != int:
             # print("Hashing column can only be int. Please try again")
             
             return {"flag":-1,"desc":"Hashing column can only be int"}
+
+        
         
         #insert into namenode metadata
         PATH_OF_PARENT = "/".join(files)
@@ -428,7 +439,8 @@ def put(LOCAL_PATH, FULL_PATH, cursor, cursor2,db, db2, partitionNum = 5 ,hashCo
             createTable += f'PRIMARY KEY (sort_index)'
         else:
             createTable += f'PRIMARY KEY (sort_index,{hashCol})'
-    
+
+        print(createTable)
         #table name: parentname_childname
         nameTable = f't_{parentID}_{childID}'
 
@@ -477,8 +489,8 @@ def put(LOCAL_PATH, FULL_PATH, cursor, cursor2,db, db2, partitionNum = 5 ,hashCo
 # E.g may have to add a fourth argument to this function i.e numOfPartitions
 def commands_main(cmd, path, partitionNum=None, local=None, hashCol = 'sort_index'):
 
-    db = mysql.connector.connect(host="localhost", user="root", passwd="hazard97", database="namenode")
-    db2 = mysql.connector.connect(host="localhost", user="root", passwd="hazard97", database="datanode")
+    db = mysql.connector.connect(host="localhost", user="root", passwd="HarryPotter7", database="namenode")
+    db2 = mysql.connector.connect(host="localhost", user="root", passwd="HarryPotter7", database="datanode")
 
     cursor = db.cursor(buffered=True)
     cursor2 = db2.cursor(buffered=True)

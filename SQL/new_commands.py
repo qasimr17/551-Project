@@ -130,7 +130,7 @@ def ListFiles(FULL_PATH, cursor=None):
     """ Takes as input a full path (string) to a location, and returns all the files/folders
     that exist in that location."""
     if cursor is None:
-        db = mysql.connector.connect(host="localhost", user="root", passwd="HarryPotter7", database="namenode")
+        db = mysql.connector.connect(host="localhost", user="root", passwd="hazard97", database="namenode")
         cursor = db.cursor(buffered=True)
 
     cleansed_path = FULL_PATH.rstrip('/')
@@ -489,8 +489,8 @@ def put(LOCAL_PATH, FULL_PATH, cursor, cursor2,db, db2, partitionNum = 5 ,hashCo
 # E.g may have to add a fourth argument to this function i.e numOfPartitions
 def commands_main(cmd, path, partitionNum=None, local=None, hashCol = 'sort_index'):
 
-    db = mysql.connector.connect(host="localhost", user="root", passwd="HarryPotter7", database="namenode")
-    db2 = mysql.connector.connect(host="localhost", user="root", passwd="HarryPotter7", database="datanode")
+    db = mysql.connector.connect(host="localhost", user="root", passwd="hazard97", database="namenode")
+    db2 = mysql.connector.connect(host="localhost", user="root", passwd="hazard97", database="datanode")
 
     cursor = db.cursor(buffered=True)
     cursor2 = db2.cursor(buffered=True)

@@ -19,13 +19,13 @@ def reduceSelect(subsets, distinctCols, message):
     if distinctCols:
         # return pd.concat(subsets, ignore_index=True).drop_duplicates(subset=distinctCols)
         final_val = pd.concat(subsets, ignore_index=True).drop_duplicates(subset=distinctCols)
-        intermediate_dict['message'] = "The final, complete df is: "
+        intermediate_dict['message'] = "The final, complete df is just a concatenation of these partition results."
         intermediate_dict['value'] = final_val.to_json(orient='table')
         message['final_result'] = intermediate_dict
         return message
     else:
         final_val = pd.concat(subsets, ignore_index=True)
-        intermediate_dict['message'] = "The final, complete df is: "
+        intermediate_dict['message'] = "The final, complete df is just a concatenation of these partition results."
         intermediate_dict['value'] = final_val.to_json(orient='table')
         message['final_result'] = intermediate_dict
         return message

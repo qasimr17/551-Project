@@ -111,7 +111,7 @@ def buildMessageSelectAggregator(value, aggregatorFunction, partition, distinctC
         return intermediate_message
 
     if aggregatorFunction == "AVG":
-        intermediate_message['message'] = f"The avg value and items used for partition {partition} is: "
+        intermediate_message['message'] = f"The avg value and items used for partition {partition} are: "
         intermediate_message['value'] = f'Average: {value[0]}, Items: {value[1]}'
         return intermediate_message
 
@@ -136,7 +136,7 @@ def buildMessageSelect(value, partition, distinctCols = None):
 
     value = value.to_json(orient='table')
     intermediate_message = {}
-    intermediate_message['message'] = f"Top 3 rows for {partition} are: "
+    intermediate_message['message'] = f"Values for {partition} are: "
     intermediate_message['value'] = f'{value}'
     return intermediate_message
 
